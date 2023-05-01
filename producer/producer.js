@@ -1,50 +1,42 @@
-const kafka = require("node-rdkafka");
-const express = require("express");
+const path = require("path");
 
+const express = require("express");
+const dotenv = require("dotenv");
+
+dotenv.config({ path: "config.env" });
+const ApiError = require("./server/utils/apiError");
+const globalError = require("./server/middleware/errorMiddleware");
+
+// express app
 const app = express();
+
+// Middlewares
 app.use(express.json());
 
-app.post("/api/v1/crud", async (req, res) => {
-  const message = JSON.stringify(req.body);
+// Routes
+const coursesRouter = require("./server/routes/courseRoute");
 
-  const stream = kafka.Producer.createWriteStream(
-    {
-      "metadata.broker.list": "192.168.1.4:9092",
-    },
-    {},
-    { topic: "test" }
-  );
-  const success = stream.write(Buffer.from(message));
+// Mount Routes
+app.use("/api/v1/courses", coursesRouter);
 
-  if (success) {
-    console.log("Message sent to Kafka");
-    res.status(200).send("Message sent to Kafka");
-  } else {
-    res.status(500).send("Error sending message to Kafka");
-  }
+app.all("*", (req, res, next) => {
+  next(new ApiError(`Can't find this route: ${req.originalUrl}`, 400));
 });
 
-app.listen(3000, () => {
-  console.log("Instructor service listening on port 3000");
+// Global error handling middleware for express
+app.use(globalError);
+
+const PORT = process.env.PORT || 3000;
+const server = app.listen(PORT, () => {
+  console.log(`App is running on port ${PORT}`);
 });
 
-//================================================================================
-// const Kafka = require("node-rdkafka");
-// const stream = Kafka.Producer.createWriteStream(
-//   {
-//     "metadata.broker.list": "192.168.1.4:9092",
-//   },
-//   {},
-//   { topic: "test" }
-// );
-
-// function queneMessage() {
-//   const result = stream.write(Buffer.from("hi"));
-//   console.log(result);
-// }
-
-// setInterval(() => {
-//   queneMessage();
-// }, 5000);
-
-//================================================================================
+// Handling error ouside express
+process.on("unhandledRejection", (err) => {
+  console.log("#".repeat(33));
+  console.error(`Unhandled Rejection Error: ${err.name} | ${err.message}`);
+  server.close(() => {
+    console.error("Shutting down....");
+    process.exit(1);
+  });
+});

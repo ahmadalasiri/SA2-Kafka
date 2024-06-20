@@ -1,6 +1,6 @@
-SA2-Kafka-Microservices-Docker
+# SA2-Kafka-Microservices-Docker
 
-## Analysis and Design of Information Systems-2 course (IS 352) (FCIA-Helwan University - Spring 2023)
+## Analysis and Design of Information Systems-2 (IS 352) (FCIA-Helwan University - Spring 2023)
 
 ## Introduction
 
